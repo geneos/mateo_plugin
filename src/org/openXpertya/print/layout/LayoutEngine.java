@@ -1152,16 +1152,21 @@ public class LayoutEngine implements Pageable,Printable,Doc {
 		Toolkit	tk	= Toolkit.getDefaultToolkit();
 
 		URL url	= getClass().getResource("/images/mateo01.png");
-		url.getPath();
-		System.out.println("URL:"+url);
 
-		PrintElement element = new ImageElement(tk.getImage(url));	//	48x15
+		PrintElement element = null;
+		Integer height = 0;
+		// Chequeo si la imagen existe
+		if (url != null) {
+			element = new ImageElement(tk.getImage(url));
+			height = Double.valueOf(element.getHeight()).intValue();
+			element.layout(m_header.width, 0, false, MPrintFormatItem.FIELDALIGNMENTTYPE_LeadingLeft);
+			element.setLocation(m_header.getLocation());
+			m_headerFooter.addElement(element);
+		}
 		//URL		url	= org.openXpertya.OpenXpertya.class.getResource(s_file48x15);
-		m_headerHeight = Double.valueOf(element.getHeight()).intValue()+5;
+		m_headerHeight = height+5;
 		calculatePageSize();
-		element.layout(m_header.width, 0, false, MPrintFormatItem.FIELDALIGNMENTTYPE_LeadingLeft);
-		element.setLocation(m_header.getLocation());
-		m_headerFooter.addElement(element);
+		
 
 		element = new StringElement("@ReportName@: @*ReportName@", new Font( tf.getStandard_Font().getName(),Font.BOLD,tf.getStandard_Font().getSize()), color, null, true);
 		element.layout (m_header.width, 0, true, MPrintFormatItem.FIELDALIGNMENTTYPE_TrailingRight);
