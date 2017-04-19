@@ -2213,7 +2213,9 @@ public class MOrder extends X_C_Order implements DocAction {
 			MProduct product = new MProduct(getCtx(), ol_M_Product_ID, get_TrxName());
 
 			if ((product != null) && product.isStocked()) {
-				BigDecimal ordered = isSOTrx ? Env.ZERO : difference;
+				//Para ordenes de compra, el entregado puede ser mayor al ordenado,
+				//En este caso no se debe actualizar el ordenado
+				BigDecimal ordered = isSOTrx || target.compareTo(ol_QtyDelivered) < 0 ? Env.ZERO : difference;
 				BigDecimal reserved = isSOTrx ? difference : Env.ZERO;
 				int M_Locator_ID = 0;
 
