@@ -475,12 +475,17 @@ public class VDocAction extends JDialog implements ActionListener {
         }
         else if( m_AD_Table_ID == MPPOrder.Table_ID ) {
 
-            // Complete                    ..  CO
-
-            if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
+        	if( DocStatus.equals( DocumentEngine.STATUS_Completed )) {
             	index = 0;
                 options[ index++ ] = DocumentEngine.ACTION_Close;
                 options[ index++ ] = DocumentEngine.ACTION_Void;
+            }
+            
+
+            // Draft                    ..  DR
+        	
+            if( DocStatus.equals( DocumentEngine.STATUS_Drafted )) {
+            	index = 0;
             }
         }
 
