@@ -26,8 +26,6 @@ import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Toolkit;
 import java.awt.geom.Point2D;
-import java.awt.image.ImageObserver;
-import java.awt.image.ImageProducer;
 import java.awt.print.PageFormat;
 import java.awt.print.Pageable;
 import java.awt.print.Printable;
@@ -141,7 +139,7 @@ public class LayoutEngine implements Pageable,Printable,Doc {
 
     /** Descripci�n de Campos */
 
-    private int m_headerHeight = 14;    // 1/4" => 72/4
+    private int m_headerHeight = 18;    // 1/4" => 72/4
 
     /** Descripci�n de Campos */
 

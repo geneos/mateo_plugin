@@ -351,7 +351,22 @@ public class MInOut extends X_M_InOut implements DocAction {
 						selfEmpty ? transferParams1 : transferParams2);
 	}
     
-    /**
+	public static String getDCMovementQtyQuery(){
+		return "select sum(iol.movementqty) as movementqty " +
+				"from m_inoutline as iol " +
+				"inner join m_inout as io on io.m_inout_id = iol.m_inout_id " +
+				"inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id " +
+				"where dt.doctypekey = 'DC'	" +
+				"		and io.docstatus in ('CO','CL') " +
+				"		and iol.c_orderline_id = ?";
+	}
+	
+	public static BigDecimal getDCMovementQty(Integer orderLineID, String trxName) {
+		BigDecimal movementQty = BigDecimal.ZERO;
+		movementQty = DB.getSQLValueBD(trxName, MInOut.getDCMovementQtyQuery(), orderLineID);
+		return movementQty;
+	}
+	/**
      * Constructor de la clase ...
      *
      *
@@ -408,6 +423,25 @@ public class MInOut extends X_M_InOut implements DocAction {
             setPosted( false );
         }
     }    // MInOut
+    
+    public static String getNotAllowedQtyReturnedSumQuery(){
+    	return getNotAllowedQtyReturnedSumQuery("l");
+    }
+    
+    
+    public static String getNotAllowedQtyReturnedSumQuery(String tableAlias){
+    	return "select sum(movementqty - (CASE WHEN qtyinvoiced > movementqty THEN movementqty ELSE qtyinvoiced END)) as qty " +
+    			"from (select iol.m_inoutline_id, iol.movementqty, sum(coalesce(il.qtyinvoiced,0)) as qtyinvoiced " +
+    			"from c_orderline as ol " +
+    			"inner join m_inoutline as iol on iol.c_orderline_id = ol.c_orderline_id " +
+    			"inner join m_inout as io on io.m_inout_id = iol.m_inout_id " +
+    			"inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id " +
+    			"left join c_invoiceline as il on il.m_inoutline_id = iol.m_inoutline_id " +
+    			"left join c_invoice as i on i.c_invoice_id = il.c_invoice_id " +
+    			"where ol.c_orderline_id = "+tableAlias+".c_orderline_id AND dt.doctypekey = 'DC' and io.docstatus IN ('CL','CO') " +
+    			"group by iol.m_inoutline_id, iol.movementqty "+
+    			") as i";
+    }
 
     /**
      * Constructor de la clase ...
@@ -2185,8 +2219,11 @@ public class MInOut extends X_M_InOut implements DocAction {
             if( sLine.getC_OrderLine_ID() != 0 ) {
                 
             	try    	{
-	                String sql = " SELECT ol.qtyOrdered, ol.qtyReserved, ol.qtyDelivered, ol.M_AttributeSetInstance_ID, ol.qtyTransferred, ol.qtyInvoiced, coalesce((select sum(iol.movementqty) as qty from c_orderline as ol2 inner join m_inoutline as iol on iol.c_orderline_id = ol2.c_orderline_id inner join m_inout as io on io.m_inout_id = iol.m_inout_id inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id where ol.c_orderline_id = ol2.c_orderline_id AND dt.doctypekey = 'DC' and io.docstatus IN ('CL','CO')),0) as ol_qtyReturned , o.m_warehouse_id " +
-	                				" FROM C_OrderLine ol INNER JOIN C_Order o ON ol.c_order_id = o.c_order_id WHERE ol.C_OrderLine_ID = " + sLine.getC_OrderLine_ID();
+					String sql = " SELECT l.qtyOrdered, l.qtyReserved, l.qtyDelivered, l.M_AttributeSetInstance_ID, l.qtyTransferred, l.qtyInvoiced, coalesce(("
+							+ MInOut.getNotAllowedQtyReturnedSumQuery()
+							+ "),0) as ol_qtyReturned , o.m_warehouse_id "
+							+ " FROM C_OrderLine l INNER JOIN C_Order o ON l.c_order_id = o.c_order_id WHERE l.C_OrderLine_ID = "
+							+ sLine.getC_OrderLine_ID();
 	                PreparedStatement stmt =  DB.prepareStatement(sql , get_TrxName());
 	                ResultSet rs = stmt.executeQuery();
 	                if (rs.next())
@@ -3292,13 +3329,16 @@ public class MInOut extends X_M_InOut implements DocAction {
 				.append(" AND ");
 		if(addExists){
 				filter.append("(EXISTS ")
-				.append("(SELECT ol.C_Order_ID ")
-				.append("FROM C_OrderLine ol ")
-				.append("WHERE C_Order.C_Order_ID = ol.C_Order_ID AND ")
-				.append(afterInvoicing ? " ol.QtyInvoiced > "
-						: " ol.QtyOrdered > ")
-				.append(" ol.QtyDelivered+ol.QtyTransferred")
-				.append(docType.isAllowDeliveryReturned()?"":"+coalesce((select sum(iol.movementqty) as qty from c_orderline as ol2 inner join m_inoutline as iol on iol.c_orderline_id = ol2.c_orderline_id inner join m_inout as io on io.m_inout_id = iol.m_inout_id inner join c_doctype as dt on dt.c_doctype_id = io.c_doctype_id where ol.c_orderline_id = ol2.c_orderline_id AND dt.doctypekey = 'DC' and io.docstatus IN ('CL','CO')),0)")
+				.append("(SELECT col.C_Order_ID ")
+				.append("FROM C_OrderLine col ")
+				.append("WHERE C_Order.C_Order_ID = col.C_Order_ID AND ")
+				.append(afterInvoicing ? " col.QtyInvoiced > "
+						: " col.QtyOrdered > ")
+				.append(" col.QtyDelivered+col.QtyTransferred")
+					.append(docType.isAllowDeliveryReturned() ? ""
+							: "+coalesce(("
+									+ MInOut.getNotAllowedQtyReturnedSumQuery("col")
+									+ "),0)")
 				.append(") ")
 				.append("OR ")
 				.append("(C_Order.IsSOTrx='Y' AND POSITION('+' IN '")
