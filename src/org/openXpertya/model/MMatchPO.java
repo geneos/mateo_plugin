@@ -317,6 +317,9 @@ public class MMatchPO extends X_M_MatchPO {
 				}
             }
 
+            //Para que no chequee duplicados en caso de completar remitos
+            orderLine.setAllowRepeatedProduct(true);
+            
             return orderLine.save( get_TrxName());
         }
 

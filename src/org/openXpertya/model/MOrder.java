@@ -2287,6 +2287,17 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 					ol_QtyDelivered.add(ol_QtyTransferred));
             
             
+            /*
+    		 * GENEOS - Modificacion Por permitir mas entrega de lo ordenado
+    		 * Si la diferencia es negativa y lo entregado es mayor a lo ordenado 
+    		 * entonces la diferencia la reduzco a 0
+    		 */
+            if (difference.signum() == -1 && ol_QtyDelivered.compareTo(target) == 1)
+            	difference = BigDecimal.ZERO;
+            /*
+             * GENEOS - Fin
+             */
+            
 
 			if (difference.compareTo(Env.ZERO) == 0
 					&& ol_QtyTransferred.compareTo(BigDecimal.ZERO) <= 0) {
@@ -4384,6 +4395,16 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 				m_processMsg = "Can not update order line reserved qty";
 				return false;
 			}
+			
+			/*
+			 * GENEOS - Modificacion por permitir recibir mas de lo ordenado
+			 * Si se recibio mas de lo ordenado entonces el ordenado a actualizar debe ser 0
+			 */
+			if (line.getQtyDelivered().compareTo(line.getQtyOrdered()) == 1)
+				qtyOrdered = BigDecimal.ZERO;
+			/*
+			 * GENEOS - Fin
+			 */
 			
             // Actualizar la cantidad reservada o pedida en el stock
 			if (MProduct.isProductStocked(getCtx(), line.getM_Product_ID())
