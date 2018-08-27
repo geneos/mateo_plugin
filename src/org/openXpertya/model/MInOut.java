@@ -2314,6 +2314,17 @@ public class MInOut extends X_M_InOut implements DocAction {
                 if( ol_ok ) {
                     reservationAttributeSetInstance_ID = ol_attsetinstanceID;
                 }
+                
+                /*
+                 * GENEOS - Modificacion para que el reservado y el ordenado siempre se maneje en 
+                 * partida 0
+                 */
+                
+                reservationAttributeSetInstance_ID = 0;
+                
+                /*
+                 * GENEOS - Fin
+                 */
 
                 //
 
@@ -2445,6 +2456,28 @@ public class MInOut extends X_M_InOut implements DocAction {
 							: QtySO.abs().negate();
 					
 					QtySO = docType.isReserveStockManagment()?QtySO:BigDecimal.ZERO;
+					
+					BigDecimal tmpQtyPO = QtyPO;
+					if (!Util.isEmpty(sLine.getC_OrderLine_ID())){
+						/*
+	            		 * GENEOS - Inicio modificacion para que se permita recibir mas que lo ordenado en el pedido
+	            		 */
+						
+						MOrderLine ol = new MOrderLine(getCtx(),sLine.getC_OrderLine_ID(),get_TrxName());
+
+						// Si es entrega chequeo de no descontar de mas del ordenado
+						if (QtyPO.signum() == 1 && ol.getQtyDelivered().add(QtyPO).compareTo(ol.getQtyOrdered()) == 1  )
+							tmpQtyPO =  ol.getQtyOrdered().compareTo(ol.getQtyDelivered()) == 1 ? ol.getQtyOrdered().subtract(ol.getQtyDelivered()) : BigDecimal.ZERO;
+						
+						// Si es devolucion entonces veo de no incrementar de mas el ordenado
+						if ( QtyPO.signum() == -1 && ol.getQtyOrdered().compareTo(ol.getQtyDelivered()) == -1){
+							tmpQtyPO =  ol.getQtyDelivered().add(QtyPO).compareTo(ol.getQtyOrdered()) == 1 ? BigDecimal.ZERO : ol.getQtyDelivered().add(QtyPO).subtract(ol.getQtyOrdered());
+						}
+						/*
+	            		 * GENEOS - Fin
+	            		 */
+					}
+					
 					// Acá tenemos dos situaciones: 1) El reservado y 2) El stock.
 					// 1) El reservado en stock se hace en el depósito del
 					// pedido por lo que es correcto que se decremente el
@@ -2462,28 +2495,7 @@ public class MInOut extends X_M_InOut implements DocAction {
 							&& !Util.isEmpty(ol_warehouseID, true)) {
 						Integer orderLocatorID = MWarehouse.getDefaultLocatorID(
 								ol_warehouseID, get_TrxName());
-						
-						
-						
-						MOrderLine ol = new MOrderLine(getCtx(),sLine.getC_OrderLine_ID(),get_TrxName());
-						
-						/*
-	            		 * GENEOS - Inicio modificacion para que se permita recibir mas que lo ordenado en el pedido
-	            		 */
-						BigDecimal tmpQtyPO = QtyPO;
-
-						// Si es entrega chequeo de no descontar de mas del ordenado
-						if (QtyPO.signum() == 1 && ol.getQtyDelivered().add(QtyPO).compareTo(ol.getQtyOrdered()) == 1  )
-							tmpQtyPO =  ol.getQtyOrdered().compareTo(ol.getQtyDelivered()) == 1 ? ol.getQtyOrdered().subtract(ol.getQtyDelivered()) : BigDecimal.ZERO;
-						
-						// Si es devolucion entonces veo de no incrementar de mas el ordenado
-						if ( QtyPO.signum() == -1 && ol.getQtyOrdered().compareTo(ol.getQtyDelivered()) == -1){
-							tmpQtyPO =  ol.getQtyDelivered().add(QtyPO).compareTo(ol.getQtyOrdered()) == 1 ? BigDecimal.ZERO : ol.getQtyDelivered().add(QtyPO).subtract(ol.getQtyOrdered());
-						}
-						/*
-	            		 * GENEOS - Fin
-	            		 */
-						
+	
 						if (!MStorage.add(getCtx(), ol_warehouseID,
 								orderLocatorID, sLine.getM_Product_ID(),
 								sLine.getM_AttributeSetInstance_ID(),

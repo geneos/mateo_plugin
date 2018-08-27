@@ -1422,12 +1422,40 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
       			log.saveError( "Error",Msg.getMsg( getCtx(),"PriceListChangedLinesAlreadyLoadedConfig" ));
       			return false;
     		}
-      		// Disytel: Si ya se incorporaron lineas, no permitir el cambio de la moneda destino
-      		if (is_ValueChanged( "C_Currency_ID" ) && qtyLines > 0 )
+      		    
+			/*
+			 * GENEOS - Modificacion para permitir cambio de moneda por mas que ya existan lineas
+			 * Se acompania con validacion de que los articulos esten en la nueva lista de precios.
+			 */
+			// Disytel: Si ya se incorporaron lineas, no permitir el cambio de la moneda destino
+			/*if (is_ValueChanged( "C_Currency_ID" ) && qtyLines > 0 )
       		{
       			log.saveError( "Error", Msg.getMsg( getCtx(),"CurrencyChangedLinesAlreadyLoaded" ));
       			return false;
+      		}  */ 
+      		if (is_ValueChanged( "C_Currency_ID" ) && qtyLines > 0 )
+      		{
+      			//Actualizo precio de lineas y chequeo que las mismas esten en la lista de precios
+      			for (MOrderLine aLine : getLines()) {
+      				MProductPricing m_productPrice = new MProductPricing( aLine.getM_Product_ID(),aLine.getC_BPartner_ID(), aLine.getQtyOrdered(),isSOTrx() );
+      		        m_productPrice.setM_PriceList_ID( getM_PriceList_ID() );
+      				m_productPrice.calculatePrice();
+      				aLine.setPrice();
+      				if( !m_productPrice.isCalculated()) {
+    	                log.saveError( "Error",aLine.getProductNameOnly()+": "+Msg.getMsg( getCtx(),"ProductNotOnPriceList" ));
+    	                return false;
+    	            }
+      				if (!aLine.save()){
+    	                log.saveError( "Error",CLogger.retrieveErrorAsString());
+      					return false;
+      				}
+      			}
+ 
       		}        
+      		
+      		/*
+      		 * GENEOS - Fin modificacion
+      		 */
     	}
         
         //TODO: cambiar esto para usa cache....
@@ -2007,7 +2035,13 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
   		if (getM_PriceList_ID() > 0 ){
   			setIsTaxIncluded(new MPriceList(getCtx(), getM_PriceList_ID(),null).isTaxIncluded()); 
   		}
-
+  		
+  		/*
+  		 * GENEOS - Pablo Velazquez
+  		 * Modificacion para que no se valide partidas en ordenes de compra/venta
+  		 */
+  		
+  		/*
         // Mandatory Product Attribute Set Instance
 
         String mandatoryType = "='Y'";    // IN ('Y','S')
@@ -2024,6 +2058,11 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 
             return DocAction.STATUS_Invalid;
         }
+        */
+  		
+  		/*
+  		 * GENEOS - Fin Modificacion
+  		 */
 
         // Lines
 
@@ -2339,8 +2378,17 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 						.compareTo(Env.ZERO) != 0)
 						&& !MStorage.add(getCtx(), ol_M_Warehouse_ID,
 								M_Locator_ID,
-						ol_M_Product_ID, ol_M_AttributeSetInstance_ID,
-						ol_M_AttributeSetInstance_ID, Env.ZERO, reserved,
+						ol_M_Product_ID,
+						ol_M_AttributeSetInstance_ID,
+						/*
+	              		 * GENEOS - Pablo Velazquez
+	              		 * Modificacion para que ordenado y reservado siempre se maneje en storage 0
+	              		 */
+						0,//ol_M_AttributeSetInstance_ID,
+						/*
+						 * GENEOS - Fin Modificacion
+						 */
+						Env.ZERO, reserved,
 						ordered, get_TrxName())) {
                     return false;
                 }
@@ -2630,6 +2678,18 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
             						:Env.ZERO;
 			BigDecimal difference = target.subtract(item.QtyReserved).subtract(
 					item.QtyDelivered.add(item.QtyTransferred));
+			
+            /*
+    		 * GENEOS - Modificacion Por permitir mas entrega de lo ordenado
+    		 * Si la diferencia es negativa y lo entregado es mayor a lo ordenado 
+    		 * entonces la diferencia la reduzco a 0
+    		 */
+            if (difference.signum() == -1 && item.QtyDelivered.compareTo(target) == 1)
+            	difference = BigDecimal.ZERO;
+            /*
+             * GENEOS - Fin
+             */
+            
 
             if( difference.compareTo( Env.ZERO ) == 0 ) 
             	continue;
@@ -2667,7 +2727,14 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
             		item.M_Warehouse_ID,M_Locator_ID,
             		item.M_Product_ID,
             		item.M_AttributeSetInstance_ID,
-            		item.M_AttributeSetInstance_ID,
+            		/*
+              		 * GENEOS - Pablo Velazquez
+              		 * Modificacion para que ordenado y reservado siempre se maneje en storage 0
+              		 */
+            		0,//item.M_AttributeSetInstance_ID,
+            		/*
+              		 * GENEOS - Fin Modificacion
+              		 */
             		Env.ZERO, //diffQtyOnHand - cantidad onHand queda igual
             		reserved, //diffQtyReserved - cantidad reserveda: solo si es IsSoTrx
             		ordered,  //diffQtyOrdered - cantidad ordenada: sol si no es IsSoTrx 
@@ -3389,11 +3456,19 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
     		// cantidad transferida
 			BigDecimal qtyDeliveredTransferred = sLine.getQtyDelivered().add(
 					sLine.getQtyTransferred());
-			if (!Util.isEmpty(qtyDeliveredTransferred, true)
+			
+			/*
+			 * GENEOS - Modificacion para poder recibir mas cantidad de lo ordenado
+			 */
+			/*if (!Util.isEmpty(qtyDeliveredTransferred, true)
 					&& sLine.getQtyOrdered().compareTo(qtyDeliveredTransferred) < 0) {
 				m_processMsg = Msg.getMsg(getCtx(), "LinesWithQtyOrderedMinorToQtyDelivered");
             	return DocAction.STATUS_Invalid;
-        	}
+        	}*/
+			
+			/*
+			 * GENEOS - Fin
+			 */
 			
 			// La cantidad pedida no puede ser menor a la cantidad facturada
 			if (!Util.isEmpty(sLine.getQtyInvoiced(), true)
