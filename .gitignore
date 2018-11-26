@@ -13,5 +13,4 @@ hs_err_pid*
 /bin/
 /.debris/
 .directory
-/.settings/
 .classpath
