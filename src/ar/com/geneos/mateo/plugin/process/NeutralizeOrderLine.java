@@ -16,8 +16,8 @@ public class NeutralizeOrderLine extends SvrProcess {
 	
 	@Override
 	protected void prepare() {
-		MOrderLine line = new MOrderLine(getCtx(), getRecord_ID(), get_TrxName());
-		MOrder order = line.getOrder();
+		line = new MOrderLine(getCtx(), getRecord_ID(), get_TrxName());
+		order = line.getOrder();
 	}
 
 	@Override
@@ -46,7 +46,7 @@ public class NeutralizeOrderLine extends SvrProcess {
 	}
 	
 	private void checkBussinesRules() throws Exception {
-		if(order == null || order.getDocStatus().equals(X_C_Order.DOCSTATUS_Completed)){
+		if(order == null || !order.getDocStatus().equals(X_C_Order.DOCSTATUS_Completed)){
 			throw new Exception("El pedido debe estar completo para utilizar esta funcionalidad");
 		}
 	}
