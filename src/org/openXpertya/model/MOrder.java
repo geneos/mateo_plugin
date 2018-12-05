@@ -4122,15 +4122,17 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
 		/*
 		 * GENEOS - Modificacion para impedir anular orden con qtyDelivered
 		 */
+        
 		String delivered = "";
 		for (int i = 0; i < lines.length; i++) {
 			if (lines[i].getQtyDelivered().compareTo(BigDecimal.ZERO) == 1)
 				delivered += lines[i] + "\n";
-			if (delivered.equals("")) {
-				m_processMsg = "No se puede anular una orden con cantidades entregadas/recibidas \n" + delivered;
-				return false;
-			}
 		}
+		if (!delivered.equals("")) {
+			m_processMsg = "No se puede anular una orden con cantidades entregadas/recibidas \n" + delivered;
+			return false;
+		}
+		
 		/*
 		 * GENEOS - Fin
 		 */

@@ -337,7 +337,7 @@
 					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" pdfFontName="Helvetica" size="8" isBold="false"/>
 					</textElement>
-				<text><![CDATA[ FP06  REV.00]]></text>
+				<text><![CDATA[FV01  REV01]]></text>
 				</staticText>
 			</band>
 		</pageHeader>

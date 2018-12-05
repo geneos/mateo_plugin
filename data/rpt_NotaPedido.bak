@@ -221,8 +221,8 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="240"
-						y="10"
+						x="248"
+						y="1"
 						width="20"
 						height="18"
 						key="staticText-31"/>
@@ -234,8 +234,8 @@
 				</staticText>
 				<staticText>
 					<reportElement
-						x="214"
-						y="29"
+						x="222"
+						y="20"
 						width="74"
 						height="26"
 						key="staticText-32"/>
