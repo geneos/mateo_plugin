@@ -172,6 +172,11 @@ public class CreateFromShipmentModel extends CreateFromModel {
 		MLocator productLocator = null;
 		boolean noStock = false;
 		String msg = "Los siguientes articulos no tienen stock suficiente: \n";
+		
+		//Control por si se repite el producto en la linea del pedido
+		//Para acumuar el stock utilizado
+		BigDecimal usedQty = BigDecimal.ZERO;
+		int last_Product_ID = 0;
 		for (SourceEntity sourceEntity : selectedSourceEntities) {
 			DocumentLine docLine = (DocumentLine) sourceEntity;
 			BigDecimal movementQty = docLine.remainingQty;
@@ -208,20 +213,44 @@ public class CreateFromShipmentModel extends CreateFromModel {
 				if (product.getM_AttributeSet_ID() != 0) {
 					MStorage[] storages = MUMStorage.getOfProduct(ctx, M_Product_ID, M_Locator_ID, product.getM_AttributeSet_ID(), true, true, trxName);
 					
+					//Reseteo cantidad usada cuando cambio de articulo
+					if (M_Product_ID != last_Product_ID) 
+						usedQty = BigDecimal.ZERO;
+					
 					for (MStorage storage : storages){
+						
+						
+						
+						//Si tengo cantidad usada entonces salteo storages
+						if (usedQty.signum() == 1){
+							if (storage.getQtyOnHand().compareTo(usedQty) <= 0){
+								usedQty = usedQty.subtract(storage.getQtyOnHand());
+								continue;
+							}
+							else
+								//Modifico de manera temporaria la cantidad en mano restando lo utilizado
+								storage.setQtyOnHand( storage.getQtyOnHand().subtract(usedQty) );
+						}
+							
+							
 						outQty = movementQty;
-						if (storage.getQtyOnHand().compareTo(outQty) <= 0)
+						if (storage.getQtyOnHand().compareTo(outQty) <= 0){
 							outQty = storage.getQtyOnHand();
+						}
 						// Crea la línea del remito
 						createInOutLine(inout,m_invoice,docLine,outQty,M_Locator_ID,storage.getM_AttributeSetInstance_ID(),handler,trxName);
 
 						movementQty = movementQty.subtract(outQty);
-						if (movementQty.signum() <= 0)
+						usedQty = usedQty.add(outQty);
+						if (movementQty.signum() <= 0){
+							last_Product_ID = M_Product_ID;
 							break;
+						}
 					}
 				
 					// No alcanzo el stock
 					if (movementQty.signum() ==1 ) {
+						last_Product_ID = M_Product_ID;
 						noStock = true;
 						msg += product.getName()+" faltan "+movementQty+"\n";
 					}
