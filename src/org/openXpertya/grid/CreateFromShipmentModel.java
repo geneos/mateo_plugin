@@ -5,7 +5,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 import java.util.logging.Level;
 
@@ -30,7 +32,7 @@ import org.openXpertya.util.Util;
 import ar.com.geneos.mrp.plugin.util.MUMStorage;
 
 public class CreateFromShipmentModel extends CreateFromModel {
-
+	
 	// =============================================================================================
 	// Logica en comun para la carga de facturas
 	// =============================================================================================
@@ -173,10 +175,18 @@ public class CreateFromShipmentModel extends CreateFromModel {
 		boolean noStock = false;
 		String msg = "Los siguientes articulos no tienen stock suficiente: \n";
 		
-		//Control por si se repite el producto en la linea del pedido
-		//Para acumuar el stock utilizado
+		/* 
+		 * Mapa que tiene el producto y la cantidad ya utilizada para este remito
+		 * (por si se repite el producto en la linea del pedido
+		 * Para acumuar el stock utilizado)
+		*/
 		BigDecimal usedQty = BigDecimal.ZERO;
 		int last_Product_ID = 0;
+		
+		Map<Integer, BigDecimal> myMap = new HashMap<Integer, BigDecimal>();
+		
+		
+
 		for (SourceEntity sourceEntity : selectedSourceEntities) {
 			DocumentLine docLine = (DocumentLine) sourceEntity;
 			BigDecimal movementQty = docLine.remainingQty;
@@ -209,30 +219,38 @@ public class CreateFromShipmentModel extends CreateFromModel {
 				MProduct product = MProduct.get(ctx, M_Product_ID);
 				int M_Locator_ID = locatorID;
 				BigDecimal outQty = BigDecimal.ZERO;
+
 				// Solo si tiene conjunto de atributos definido
 				if (product.getM_AttributeSet_ID() != 0) {
 					MStorage[] storages = MUMStorage.getOfProduct(ctx, M_Product_ID, M_Locator_ID, product.getM_AttributeSet_ID(), true, true, trxName);
-					
 					//Reseteo cantidad usada cuando cambio de articulo
-					if (M_Product_ID != last_Product_ID) 
-						usedQty = BigDecimal.ZERO;
+					
+					
+					if (M_Product_ID != last_Product_ID) {
+						usedQty = myMap.get(M_Product_ID) != null ? myMap.get(M_Product_ID) : BigDecimal.ZERO;
+					}
+					
+					if (usedQty.signum() == 1){
+						BigDecimal auxUsedQty = usedQty;
+						for (MStorage storage : storages){
+							//Si tengo cantidad usada entonces salteo storages
+							if (storage.getQtyOnHand().compareTo(auxUsedQty) <= 0){
+								auxUsedQty = auxUsedQty.subtract(storage.getQtyOnHand());
+								storage.setQtyOnHand( BigDecimal.ZERO );
+							}
+							else {
+								//Modifico de manera temporaria la cantidad en mano restando lo utilizado
+								storage.setQtyOnHand( storage.getQtyOnHand().subtract(auxUsedQty) );
+								break;
+							}
+							
+						}
+					}
 					
 					for (MStorage storage : storages){
+						if (storage.getQtyOnHand().signum() == 0)
+							continue;
 						
-						
-						
-						//Si tengo cantidad usada entonces salteo storages
-						if (usedQty.signum() == 1){
-							if (storage.getQtyOnHand().compareTo(usedQty) <= 0){
-								usedQty = usedQty.subtract(storage.getQtyOnHand());
-								continue;
-							}
-							else
-								//Modifico de manera temporaria la cantidad en mano restando lo utilizado
-								storage.setQtyOnHand( storage.getQtyOnHand().subtract(usedQty) );
-						}
-							
-							
 						outQty = movementQty;
 						if (storage.getQtyOnHand().compareTo(outQty) <= 0){
 							outQty = storage.getQtyOnHand();
@@ -243,6 +261,7 @@ public class CreateFromShipmentModel extends CreateFromModel {
 						movementQty = movementQty.subtract(outQty);
 						usedQty = usedQty.add(outQty);
 						if (movementQty.signum() <= 0){
+							myMap.put(M_Product_ID, usedQty);
 							last_Product_ID = M_Product_ID;
 							break;
 						}
@@ -250,6 +269,7 @@ public class CreateFromShipmentModel extends CreateFromModel {
 				
 					// No alcanzo el stock
 					if (movementQty.signum() ==1 ) {
+						myMap.put(M_Product_ID, usedQty);
 						last_Product_ID = M_Product_ID;
 						noStock = true;
 						msg += product.getName()+" faltan "+movementQty+"\n";
