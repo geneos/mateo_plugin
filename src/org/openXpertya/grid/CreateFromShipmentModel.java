@@ -228,6 +228,7 @@ public class CreateFromShipmentModel extends CreateFromModel {
 					
 					if (M_Product_ID != last_Product_ID) {
 						usedQty = myMap.get(M_Product_ID) != null ? myMap.get(M_Product_ID) : BigDecimal.ZERO;
+						usedQty = BigDecimal.ZERO;
 					}
 					
 					if (usedQty.signum() == 1){

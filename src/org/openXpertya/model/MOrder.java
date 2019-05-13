@@ -4403,6 +4403,24 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
             log.fine( "Existing documents not modified - " + dt );
         }
 
+        /*
+         * GENEOS - Modificacion para bloquear la reactivacion del documento si ya existen recepciones.
+         */
+        
+        MInOut[] inouts = getShipments();
+        for (MInOut inout : inouts) {
+        	if (inout.getDocStatus().equals(DOCSTATUS_Closed)
+        		|| inout.getDocStatus().equals(DOCSTATUS_Completed)) {
+        		m_processMsg = "Can not reactivate order with shipments. ("+inout.getDocumentNo()+")";
+            	return false;
+        	}
+        }
+        
+        /*
+         * GENEOS - Fin modificacion
+         */
+        
+        
         // Reverse Direct Documents
 
         if( MDocType.DOCSUBTYPESO_OnCreditOrder.equals( DocSubTypeSO )    // (W)illCall(I)nvoice
