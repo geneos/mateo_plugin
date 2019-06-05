@@ -4,10 +4,10 @@
 <jasperReport
 		 name="rpt_NotaPedido"
 		 columnCount="1"
-		 printOrder="Horizontal"
+		 printOrder="Vertical"
 		 orientation="Portrait"
 		 pageWidth="595"
-		 pageHeight="842"
+		 pageHeight="595"
 		 columnWidth="535"
 		 columnSpacing="0"
 		 leftMargin="30"
@@ -337,7 +337,7 @@
 					<textElement verticalAlignment="Middle">
 						<font fontName="Tahoma" pdfFontName="Helvetica" size="8" isBold="false"/>
 					</textElement>
-				<text><![CDATA[ FP06  REV.00]]></text>
+				<text><![CDATA[FV01  REV01]]></text>
 				</staticText>
 			</band>
 		</pageHeader>
@@ -698,7 +698,7 @@
 			</band>
 		</columnHeader>
 		<detail>
-			<band height="12"  isSplitAllowed="false" >
+			<band height="12"  isSplitAllowed="true" >
 				<textField isStretchWithOverflow="false" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="3"
@@ -712,13 +712,14 @@
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA[($F{CODARTICULO}.equalsIgnoreCase("TX")? null: $F{CODARTICULO})]]></textFieldExpression>
 				</textField>
-				<textField isStretchWithOverflow="false" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+				<textField isStretchWithOverflow="true" pattern="" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						x="66"
 						y="1"
-						width="186"
+						width="256"
 						height="11"
-						key="textField-25"/>
+						key="textField-25"
+						stretchType="RelativeToTallestObject"/>
 					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
 					<textElement>
 						<font size="7"/>
@@ -803,15 +804,6 @@
 					</textElement>
 				<textFieldExpression   class="java.lang.String"><![CDATA["Total:"]]></textFieldExpression>
 				</textField>
-				<line direction="TopDown">
-					<reportElement
-						x="4"
-						y="4"
-						width="525"
-						height="0"
-						key="line-1"/>
-					<graphicElement stretchType="NoStretch"/>
-				</line>
 				<textField isStretchWithOverflow="false" pattern="###0.00;###0.00-" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
 					<reportElement
 						mode="Transparent"
