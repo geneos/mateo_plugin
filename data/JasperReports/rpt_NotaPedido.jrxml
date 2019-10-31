@@ -342,7 +342,7 @@
 			</band>
 		</pageHeader>
 		<columnHeader>
-			<band height="71"  isSplitAllowed="true" >
+			<band height="106"  isSplitAllowed="true" >
 				<staticText>
 					<reportElement
 						x="0"
@@ -606,7 +606,7 @@
 				<rectangle>
 					<reportElement
 						x="0"
-						y="55"
+						y="88"
 						width="535"
 						height="15"
 						forecolor="#FFFFFF"
@@ -618,7 +618,7 @@
 					<reportElement
 						mode="Transparent"
 						x="3"
-						y="57"
+						y="90"
 						width="63"
 						height="13"
 						forecolor="#000000"
@@ -635,7 +635,7 @@
 					<reportElement
 						mode="Transparent"
 						x="67"
-						y="57"
+						y="90"
 						width="179"
 						height="12"
 						forecolor="#000000"
@@ -651,7 +651,7 @@
 					<reportElement
 						mode="Transparent"
 						x="325"
-						y="57"
+						y="90"
 						width="50"
 						height="13"
 						forecolor="#000000"
@@ -667,7 +667,7 @@
 					<reportElement
 						mode="Transparent"
 						x="388"
-						y="57"
+						y="90"
 						width="50"
 						height="13"
 						forecolor="#000000"
@@ -683,7 +683,7 @@
 					<reportElement
 						mode="Transparent"
 						x="449"
-						y="57"
+						y="78"
 						width="50"
 						height="13"
 						forecolor="#000000"
@@ -695,6 +695,33 @@
 					</textElement>
 				<text><![CDATA[REMANENTE]]></text>
 				</staticText>
+				<staticText>
+					<reportElement
+						x="0"
+						y="55"
+						width="61"
+						height="11"
+						key="staticText-40"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Middle">
+						<font fontName="Tahoma" size="7"/>
+					</textElement>
+				<text><![CDATA[Descripción:]]></text>
+				</staticText>
+				<textField isStretchWithOverflow="true" isBlankWhenNull="true" evaluationTime="Now" hyperlinkType="None"  hyperlinkTarget="Self" >
+					<reportElement
+						x="61"
+						y="55"
+						width="266"
+						height="33"
+						key="textField-49"
+						isPrintWhenDetailOverflows="true"/>
+					<box topBorder="None" topBorderColor="#000000" leftBorder="None" leftBorderColor="#000000" rightBorder="None" rightBorderColor="#000000" bottomBorder="None" bottomBorderColor="#000000"/>
+					<textElement verticalAlignment="Top">
+						<font fontName="Tahoma" size="7"/>
+					</textElement>
+				<textFieldExpression   class="java.lang.String"><![CDATA[$P{DESCRIPTION}]]></textFieldExpression>
+				</textField>
 			</band>
 		</columnHeader>
 		<detail>
