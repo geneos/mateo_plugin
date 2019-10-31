@@ -1457,6 +1457,23 @@ public class MOrder extends X_C_Order implements DocAction, Authorization  {
       		 * GENEOS - Fin modificacion
       		 */
     	}
+    	
+    	/*
+		 * GENEOS - Modificacion para obligatoriedad de proyecto y campaña en ordenes de compra
+		 */
+    	
+    	if (!isSOTrx()) {
+    		if (getC_Project_ID() == 0 || getC_Campaign_ID() == 0)
+      		{
+      			log.saveError( "Error","Por favor seleccione una campañá y proyecto");
+      			return false;
+    		}
+
+    	}
+    	
+    	/*
+  		 * GENEOS - Fin modificacion
+  		 */
         
         //TODO: cambiar esto para usa cache....
         // Disytel: Si no hay conversion, no permitir seleccionar moneda destino
